@@ -3,7 +3,7 @@ name: Extract Roman Urdu survey evidence deposit
 on:
   push:
     paths:
-      - "roman-urdu-survey-evidence/evidence_bundle.zip"
+      - "roman-urdu-survey-evidence/evidence_bundle.part*"
       - ".github/workflows/extract-roman-urdu-evidence.yml"
 
 permissions:
@@ -14,15 +14,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Extract versioned evidence files
+      - name: Reassemble and extract versioned evidence files
         shell: bash
         run: |
           set -euo pipefail
+          cat roman-urdu-survey-evidence/evidence_bundle.part1 \
+              roman-urdu-survey-evidence/evidence_bundle.part2 \
+              roman-urdu-survey-evidence/evidence_bundle.part3 \
+              roman-urdu-survey-evidence/evidence_bundle.part4 \
+              roman-urdu-survey-evidence/evidence_bundle.part5 \
+            > roman-urdu-survey-evidence/evidence_bundle.zip
+          echo "fbdd2f95c59b0148a321eab1bbf9d1ddf3e050e6fdb851dbbb151e6464b21e69  roman-urdu-survey-evidence/evidence_bundle.zip" | sha256sum -c -
           unzip -o roman-urdu-survey-evidence/evidence_bundle.zip -d roman-urdu-survey-evidence/
           mv -f roman-urdu-survey-evidence/REPOSITORY_README.md roman-urdu-survey-evidence/README.md
+          rm -f roman-urdu-survey-evidence/evidence_bundle.part1 \
+                roman-urdu-survey-evidence/evidence_bundle.part2 \
+                roman-urdu-survey-evidence/evidence_bundle.part3 \
+                roman-urdu-survey-evidence/evidence_bundle.part4 \
+                roman-urdu-survey-evidence/evidence_bundle.part5
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add roman-urdu-survey-evidence/
+          git add -A roman-urdu-survey-evidence/
           if ! git diff --cached --quiet; then
             git commit -m "Extract Roman Urdu evidence deposit [skip ci]"
             git push
