@@ -1,0 +1,29 @@
+name: Extract Roman Urdu survey evidence deposit
+
+on:
+  push:
+    paths:
+      - "roman-urdu-survey-evidence/evidence_bundle.zip"
+      - ".github/workflows/extract-roman-urdu-evidence.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract versioned evidence files
+        shell: bash
+        run: |
+          set -euo pipefail
+          unzip -o roman-urdu-survey-evidence/evidence_bundle.zip -d roman-urdu-survey-evidence/
+          mv -f roman-urdu-survey-evidence/REPOSITORY_README.md roman-urdu-survey-evidence/README.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add roman-urdu-survey-evidence/
+          if ! git diff --cached --quiet; then
+            git commit -m "Extract Roman Urdu evidence deposit [skip ci]"
+            git push
+          fi
