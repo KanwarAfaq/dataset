@@ -1,112 +1,204 @@
 #!/usr/bin/env python3
-"""Structural validation for the final Roman Urdu survey package.
+"""Submission-grade structural validation for the Roman Urdu survey package.
 
-This script checks file/citation/evidence-matrix correspondence and drafting residue.
-It does not establish statement-to-source validity.
+Checks file/citation/evidence-matrix correspondence, required graphics, controlled
+fields, evidence-matrix count labels, and drafting residue. The transcript prints
+SHA-256 hashes so a validation result can be tied to exact source files.
+
+This script does not establish statement-to-source validity; that requires source review.
 """
 from __future__ import annotations
-import csv, re, sys
+
+import csv
+import hashlib
+import re
+import sys
 from collections import Counter
+from datetime import datetime, timezone
 from pathlib import Path
 
+VALIDATOR_VERSION = "2.0"
 ROOT = Path(__file__).resolve().parent
 MAIN = ROOT / "main.tex"
 S1 = ROOT / "S1.tex"
 S2 = ROOT / "S2.tex"
 BIB = ROOT / "roman_urdu_survey.bib"
 S3 = ROOT / "S3_evidence_matrix.csv"
-FIGURES = [
-    ROOT / "material" / "review_methodology_process_flowchart.png",
-    ROOT / "material" / "evidence_taxonomy.png",
-]
-REQUIRED_FILES = [MAIN, S1, S2, BIB, S3, ROOT / "wlpeerj.cls", *FIGURES]
-TEXT_FILES = [MAIN, S1, S2, BIB, S3]
+SELF = Path(__file__).resolve()
+BASE_REQUIRED_FILES = [MAIN, S1, S2, BIB, S3, ROOT / "wlpeerj.cls"]
+TEXT_FILES = [MAIN, S1, S2, BIB, S3, SELF]
+HASH_FILES = [MAIN, BIB, S1, S2, S3, SELF]
 
 
-def bib_keys(text: str):
+def bib_keys(text: str) -> list[str]:
     return re.findall(r"@\w+\s*\{\s*([^,\s]+)\s*,", text)
 
 
-def citation_keys(text: str):
-    out=[]
+def citation_keys(text: str) -> list[str]:
+    out: list[str] = []
     for group in re.findall(r"\\cite\w*\s*(?:\[[^\]]*\]\s*)?\{([^}]*)\}", text):
         out.extend(k.strip() for k in group.split(",") if k.strip())
     return out
 
 
-def main():
-    missing_files=[str(p.relative_to(ROOT)) for p in REQUIRED_FILES if not p.exists()]
-    bib=bib_keys(BIB.read_text(encoding="utf-8")) if BIB.exists() else []
-    bib_dupes=sorted(k for k,c in Counter(bib).items() if c>1)
-    cited=[]
-    for p in (MAIN,S1,S2):
-        if p.exists(): cited.extend(citation_keys(p.read_text(encoding="utf-8")))
-    cited=sorted(set(cited))
-    bibset=set(bib)
-    rows=[]
+def graphics_paths(text: str) -> list[str]:
+    return [x.strip() for x in re.findall(r"\\includegraphics(?:\[[^\]]*\])?\s*\{([^}]+)\}", text, re.S)]
+
+
+def sha256(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for block in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(block)
+    return h.hexdigest()
+
+
+def main() -> int:
+    timestamp = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    main_text = MAIN.read_text(encoding="utf-8") if MAIN.exists() else ""
+
+    graphics = graphics_paths(main_text)
+    graphic_files = [ROOT / p for p in graphics]
+    required_files = BASE_REQUIRED_FILES + graphic_files
+    missing_files = [str(p.relative_to(ROOT)) for p in required_files if not p.exists()]
+
+    bib = bib_keys(BIB.read_text(encoding="utf-8")) if BIB.exists() else []
+    bib_dupes = sorted(k for k, c in Counter(bib).items() if c > 1)
+
+    all_citations: list[str] = []
+    for p in (MAIN, S1, S2):
+        if p.exists():
+            all_citations.extend(citation_keys(p.read_text(encoding="utf-8")))
+    citation_occurrences = len(all_citations)
+    cited = sorted(set(all_citations))
+    bibset = set(bib)
+
+    rows: list[dict[str, str]] = []
     if S3.exists():
-        with S3.open(newline="",encoding="utf-8-sig") as f:
-            reader=csv.DictReader(f); fields=reader.fieldnames or []; rows=list(reader)
+        with S3.open(newline="", encoding="utf-8-sig") as f:
+            reader = csv.DictReader(f)
+            fields = reader.fieldnames or []
+            rows = list(reader)
     else:
-        fields=[]
-    s3=[r.get("citation_key","").strip() for r in rows]
-    s3_dupes=sorted(k for k,c in Counter(s3).items() if k and c>1)
-    s3set=set(s3)
-    mandatory=("citation_key","title","year","publication_type","peer_review_status","task","script_language_scope","verification_status","inclusion_rationale","doi_or_url")
-    missing_fields=sorted(set(mandatory)-set(fields))
-    empty_mandatory=[]
-    for i,row in enumerate(rows,start=2):
-        for col in mandatory:
-            if col in row and not row[col].strip(): empty_mandatory.append(f"row {i}:{col}")
-    integrity_cols=[c for c in fields if c.startswith("integrity_")]
-    invalid_integrity=[]
-    for i,row in enumerate(rows,start=2):
-        for col in integrity_cols:
-            if row.get(col,"").strip() not in {"Y","N","P","NR","NA"}:
-                invalid_integrity.append(f"row {i}:{col}={row.get(col,'')!r}")
-    residue_patterns=(
-        r"\bTO"+r"DO\b", r"\bFIX"+r"ME\b", r"\bT"+r"BD\b", r"\[citation "+r"needed\]",
-        r"\[IN"+r"SERT", r"\bPLACE"+r"HOLDER\b", r"UP"+r"DATE TO:", r"\bFI"+r"ND:",
-        r"VERIFY "+r"BEFORE SUBMISSION", r"CONSULT "+r"S2", r"CONSULT "+r"MAIN",
-        r"SEE "+r"SOURCE", r"SEE "+r"PRIMARY", r"DEFAULT "+r"METADATA",
-        r"NOT INDEPENDENTLY "+r"TABULATED"
+        fields = []
+
+    s3 = [r.get("citation_key", "").strip() for r in rows]
+    s3_dupes = sorted(k for k, c in Counter(s3).items() if k and c > 1)
+    s3set = set(s3)
+
+    mandatory = (
+        "citation_key", "title", "year", "publication_type", "peer_review_status",
+        "task", "script_language_scope", "verification_status", "inclusion_rationale",
+        "doi_or_url",
     )
-    residue=[]
+    missing_fields = sorted(set(mandatory) - set(fields))
+    empty_mandatory: list[str] = []
+    for i, row in enumerate(rows, start=2):
+        for col in mandatory:
+            if col in row and not row[col].strip():
+                empty_mandatory.append(f"row {i}:{col}")
+
+    integrity_cols = [c for c in fields if c.startswith("integrity_")]
+    invalid_integrity: list[str] = []
+    for i, row in enumerate(rows, start=2):
+        for col in integrity_cols:
+            if row.get(col, "").strip() not in {"Y", "N", "P", "NR", "NA"}:
+                invalid_integrity.append(f"row {i}:{col}={row.get(col, '')!r}")
+
+    # Split strings keep the validator from matching its own regex definitions.
+    residue_patterns = (
+        r"\bTO" + r"DO\b",
+        r"\bFIX" + r"ME\b",
+        r"\bT" + r"BD\b",
+        r"\[citation\s+" + r"needed\]",
+        r"\[IN" + r"SERT",
+        r"\bPLACE" + r"HOLDER\b",
+        r"\bto\s+be\s+" + r"inserted\b",
+        r"\bto\s+be\s+" + r"added\b",
+        r"\brepository\s+" + r"link\b",
+        r"\bactual\s+" + r"doi\b",
+        r"\?" + r"\?" + r"\?",
+        r"UP" + r"DATE TO:",
+        r"\bFI" + r"ND:",
+        r"VERIFY " + r"BEFORE SUBMISSION",
+        r"CONSULT " + r"S2",
+        r"CONSULT " + r"MAIN",
+        r"SEE " + r"SOURCE",
+        r"SEE " + r"PRIMARY",
+        r"DEFAULT " + r"METADATA",
+        r"NOT INDEPENDENTLY " + r"TABULATED",
+    )
+    residue: list[tuple[str, str]] = []
     for p in TEXT_FILES:
-        if not p.exists(): continue
-        txt=p.read_text(encoding="utf-8")
+        if not p.exists():
+            continue
+        txt = p.read_text(encoding="utf-8")
         for pat in residue_patterns:
-            if re.search(pat,txt,re.I): residue.append((p.name,pat))
-    main_text=MAIN.read_text(encoding="utf-8") if MAIN.exists() else ""
-    supplement_mentions=[x for x in ("S1","S2","S3","S4") if not re.search(rf"Supplementary File~?{x}|\b{x}\b",main_text)]
-    checks={
-        "missing required files":missing_files,
-        "duplicate BibTeX keys":bib_dupes,
-        "citations missing from BibTeX":sorted(set(cited)-bibset),
-        "BibTeX records not cited in manuscript/supplements":sorted(bibset-set(cited)),
-        "BibTeX records missing from S3":sorted(bibset-s3set),
-        "S3 keys absent from BibTeX":sorted(s3set-bibset),
-        "duplicate S3 citation keys":s3_dupes,
-        "missing mandatory S3 columns":missing_fields,
-        "empty mandatory S3 fields":empty_mandatory,
-        "invalid integrity controlled values":invalid_integrity,
-        "supplements not mentioned in main.tex":supplement_mentions,
-        "drafting residue":residue,
+            if re.search(pat, txt, re.I):
+                residue.append((p.name, pat))
+
+    supplement_mentions = [
+        x for x in ("S1", "S2", "S3", "S4")
+        if not re.search(rf"Supplementary File~?{x}|\b{x}\b", main_text)
+    ]
+
+    matrix_n_values = [int(x) for x in re.findall(r"(?:final\s+)?(?:S3\s+)?evidence matrix\s*\(n=(\d+)\)", main_text, re.I)]
+    matrix_count_mismatches = [f"main n={n}, S3 rows={len(rows)}" for n in matrix_n_values if n != len(rows)]
+
+    repo_statement_issue = []
+    if MAIN.exists() and "public versioned GitHub directory" in main_text:
+        if not re.search(r"https://github\.com/[^}\s]+/tree/[0-9a-f]{40}/[^}\s]+", main_text, re.I):
+            repo_statement_issue.append("Data Availability claims a versioned GitHub directory but does not use a commit-pinned 40-hex URL")
+
+    count_mismatch = [] if len(bib) == len(rows) else [f"bibliography={len(bib)}, S3={len(rows)}"]
+
+    checks = {
+        "missing required files/graphics": missing_files,
+        "duplicate BibTeX keys": bib_dupes,
+        "citations missing from BibTeX": sorted(set(cited) - bibset),
+        "BibTeX records not cited in manuscript/supplements": sorted(bibset - set(cited)),
+        "BibTeX records missing from S3": sorted(bibset - s3set),
+        "S3 keys absent from BibTeX": sorted(s3set - bibset),
+        "duplicate S3 citation keys": s3_dupes,
+        "missing mandatory S3 columns": missing_fields,
+        "empty mandatory S3 fields": empty_mandatory,
+        "invalid integrity controlled values": invalid_integrity,
+        "supplements not mentioned in main.tex": supplement_mentions,
+        "evidence-matrix n= count mismatches": matrix_count_mismatches,
+        "bibliography/S3 total-count mismatch": count_mismatch,
+        "versioned repository statement": repo_statement_issue,
+        "drafting residue (including S4 itself)": residue,
     }
+
+    print(f"S4 validator version: {VALIDATOR_VERSION}")
+    print(f"Validation timestamp (UTC): {timestamp}")
+    print("SHA-256 source hashes:")
+    for p in HASH_FILES:
+        if p.exists():
+            print(f"  {sha256(p)}  {p.name}")
+        else:
+            print(f"  MISSING  {p.name}")
+
     print(f"BibTeX records: {len(bib)}")
+    print(f"Citation occurrences across main/S1/S2: {citation_occurrences}")
     print(f"Unique citation keys across main/S1/S2: {len(cited)}")
     print(f"S3 evidence rows: {len(rows)}")
-    failed=False
-    for name,value in checks.items():
-        print(f"{name}: {value if value else 'none'}")
+    print(f"Graphics referenced by main.tex: {len(graphics)}")
+
+    failed = False
+    print("Check results:")
+    for name, value in checks.items():
+        status = "FAIL" if value else "PASS"
+        print(f"  [{status}] {name}: {value if value else 'none'}")
         failed |= bool(value)
-    if len(bib)!=len(rows):
-        print(f"count mismatch: bibliography={len(bib)}, S3={len(rows)}"); failed=True
+
     if failed:
-        print("VALIDATION: FAIL"); return 1
+        print("VALIDATION: FAIL")
+        return 1
     print("VALIDATION: PASS")
     print("Scope: structural correspondence only; statement-to-source validity requires source review.")
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())
