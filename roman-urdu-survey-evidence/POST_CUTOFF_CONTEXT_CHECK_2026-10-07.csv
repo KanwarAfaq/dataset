@@ -1,3 +1,2 @@
-<PARSED TEXT FOR SHEET: 1 / 1 TABS
-TAB NAME: POST_CUTOFF_CONTEXT_CHECK_2026-10-07.csv>index,candidate,earliest_public_date,cutoff,status_in_current_source_set,evidence,decision
-0,One Form to Transfer Them All: Pretraining Multilingual Language Models Beyond Native Orthography,2026-08-26,2026-07-15,NOT CITED / NOT IN BIBTEX / NOT IN S3,arXiv:2608.25904,Post-cutoff and not part of the current primary synthesis; no source-set removal required.
+﻿candidate,earliest_public_date,cutoff,status_in_current_source_set,evidence,decision
+One Form to Transfer Them All: Pretraining Multilingual Language Models Beyond Native Orthography,2026-08-26,2026-07-15,NOT CITED / NOT IN BIBTEX / NOT IN S3,arXiv:2608.25904,Post-cutoff and not part of the current primary synthesis; no source-set removal required.
