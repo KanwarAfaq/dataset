@@ -1,0 +1,11 @@
+<PARSED TEXT FOR SHEET: 1 / 1 TABS
+TAB NAME: ELIGIBILITY_CUTOFF_AUDIT_2026-10-07.csv>index,citation_key,authority,earliest_verified_public_evidence,cutoff_status,official_url
+0,khubaib2026romanCorpus,Hugging Face dataset card,pre-cutoff public repository history (March 2026 activity visible),ELIGIBLE,https://huggingface.co/datasets/Khubaib01/RomanUrdu-NLP-Sentiment-Corpus
+1,khan2026instrLLM,ACL Anthology,2026-03,ELIGIBLE,https://aclanthology.org/2026.abjadnlp-1.28/
+2,jamil2026ruab,ACL Anthology,2026-03,ELIGIBLE,https://aclanthology.org/2026.abjadnlp-1.37/
+3,amjad2026romanCodeMix,Journal of Applied Linguistics and TESOL,2026-04-15,ELIGIBLE,https://jaltpk.com/index.php/jalt/article/view/2212
+4,llmCodeMixing2026,arXiv,2026-01-12,ELIGIBLE,https://arxiv.org/abs/2601.07153
+5,romeva2026,arXiv,2026-06-21,ELIGIBLE,https://arxiv.org/abs/2606.22478
+6,tokenCost2026,ACL Anthology proceedings PDF,2026-07-04,ELIGIBLE,https://aclanthology.org/2026.gem-main.54.pdf
+7,ain2026fakeReviews,International Journal of Innovations in Science & Technology,2026-06-14,ELIGIBLE,https://journal.50sea.com/index.php/IJIST/article/view/1905
+8,nazir2026codeMixedReview,Springer Nature,2026-03-04,ELIGIBLE,https://link.springer.com/article/10.1007/s13278-026-01588-2

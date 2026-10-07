@@ -1,0 +1,43 @@
+S3 SOURCE-TYPE COUNT ARTIFACT
+Generated: 2026-10-07
+S3 rows: 67
+
+Controlled publication_type counts:
+- article: 34
+- book: 2
+- inproceedings: 18
+- misc: 13
+
+Controlled peer_review_status counts:
+- Dataset card; not peer reviewed: 1
+- Model or dataset card; not peer reviewed: 2
+- Peer-reviewed conference/workshop paper: 17
+- Peer-reviewed journal article: 33
+- Peer-reviewed journal review: 1
+- Preprint; not peer reviewed: 6
+- Repository dataset record; not a peer-reviewed article: 1
+- Repository or resource record; not peer reviewed: 2
+- Repository; not peer reviewed: 1
+- Retracted proceedings paper: 1
+- Scholarly book: 2
+
+Normalized source-type counts used for descriptive reporting:
+- Dataset/model card: 3
+- Peer-reviewed conference/workshop paper: 17
+- Peer-reviewed journal/review article: 34
+- Preprint/technical report: 6
+- Repository/resource record: 4
+- Retracted proceedings paper: 1
+- Scholarly book: 2
+- TOTAL: 67
+
+Aggregation rule:
+- Peer-reviewed journal article + Peer-reviewed journal review -> Peer-reviewed journal/review article
+- Peer-reviewed conference/workshop paper -> Peer-reviewed conference/workshop paper
+- Retracted proceedings paper -> Retracted proceedings paper
+- Preprint; not peer reviewed -> Preprint/technical report
+- Any controlled peer-review status containing "card" -> Dataset/model card
+- Any controlled peer-review status containing "repository" or "resource record" -> Repository/resource record
+- Scholarly book -> Scholarly book
+
+Interpretation: these counts describe only the identified source set. They are not field-wide publication rates or temporal trends.

@@ -185,6 +185,39 @@ def main() -> int:
     print(f"S3 evidence rows: {len(rows)}")
     print(f"Graphics referenced by main.tex: {len(graphics)}")
 
+    publication_type_counts = Counter(r.get("publication_type", "").strip() for r in rows)
+    peer_status_counts = Counter(r.get("peer_review_status", "").strip() for r in rows)
+    print("S3 publication_type counts (controlled values):")
+    for label, count in sorted(publication_type_counts.items()):
+        print(f"  {label}: {count}")
+    print("S3 peer_review_status counts (controlled values):")
+    for label, count in sorted(peer_status_counts.items()):
+        print(f"  {label}: {count}")
+
+    normalized_source_counts = Counter()
+    for r in rows:
+        status = r.get("peer_review_status", "").strip().lower()
+        if status.startswith("peer-reviewed journal"):
+            normalized_source_counts["Peer-reviewed journal/review article"] += 1
+        elif status == "peer-reviewed conference/workshop paper":
+            normalized_source_counts["Peer-reviewed conference/workshop paper"] += 1
+        elif status == "retracted proceedings paper":
+            normalized_source_counts["Retracted proceedings paper"] += 1
+        elif status == "preprint; not peer reviewed":
+            normalized_source_counts["Preprint/technical report"] += 1
+        elif "card" in status:
+            normalized_source_counts["Dataset/model card"] += 1
+        elif "repository" in status or "resource record" in status:
+            normalized_source_counts["Repository/resource record"] += 1
+        elif status == "scholarly book":
+            normalized_source_counts["Scholarly book"] += 1
+        else:
+            normalized_source_counts[f"Other: {r.get('peer_review_status', '').strip()}"] += 1
+    print("S3 normalized source-type counts (derived from peer_review_status):")
+    for label, count in sorted(normalized_source_counts.items()):
+        print(f"  {label}: {count}")
+    print(f"  TOTAL: {sum(normalized_source_counts.values())}")
+
     failed = False
     print("Check results:")
     for name, value in checks.items():
