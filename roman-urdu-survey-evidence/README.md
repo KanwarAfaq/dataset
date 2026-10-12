@@ -1,48 +1,35 @@
 # Roman Urdu Survey Evidence Deposit
 
-This directory archives the machine-readable evidence matrix, the structural validation script, and the final audit artifacts used for the manuscript **“Roman Urdu and Roman Urdu–English NLP: a structured survey of resources, methods, and evaluation practices.”** The deposit is intended to make the cited evidence set reproducible and inspectable without depending on a moving default branch.
+This directory contains the remaining machine-readable evidence artifacts and the structural validator used for the manuscript **“Roman Urdu and Roman Urdu–English NLP: a structured survey of resources, methods, and evaluation practices.”**
 
-## Files
+## Remaining files
 
 - `S3_evidence_matrix.csv` — one row per cited record (67 rows), with source type, peer-review status, task, linguistic scope, provenance, verification status, and integrity fields.
-- `S4_validate_evidence.py` — standard-library submission validator for citation/BibTeX/S3 correspondence, required graphics, controlled fields, drafting residue, count labels, SHA-256 source hashes, and package completeness.
-- `S3_SOURCE_TYPE_COUNTS.txt` — count artifact generated directly from the controlled S3 fields, including the documented aggregation rule used for descriptive source-type reporting.
-- `LIVE_REFERENCE_STATUS_2026-10-07.csv` — live metadata/publication-status audit used in the final technical round.
-- `ELIGIBILITY_CUTOFF_AUDIT_2026-10-07.csv` — audit of the 2026 records retained in the 67-record source set against the 15 July 2026 eligibility cutoff.
-- `POST_CUTOFF_CONTEXT_CHECK_2026-10-07.csv` — documents the post-cutoff CMU/EMNLP romanization paper raised by a reviewer and records that it is not cited or included in the current source set.
-- `REVIEWER_MINOR_REVISION_WEB_CHECK_2026-10-07.csv` — issue-by-issue resolution of the final metadata/cutoff comments using official web records.
-- `SHA256SUMS.txt` — hashes for the deposited evidence/audit files.
-- `evidence_bundle.zip` — convenience bundle of the deposited evidence/audit files.
+- `S4_validate_evidence.py` — standard-library validator for citation/BibTeX/S3 correspondence, required graphics, controlled fields, drafting residue, count labels, SHA-256 source hashes, and package completeness. It is retained here as the validation script used with the full manuscript package.
+- `S3_SOURCE_TYPE_COUNTS.txt` — count artifact generated from the controlled S3 fields, including the documented aggregation rule used for descriptive source-type reporting.
+- `SHA256SUMS.txt` — SHA-256 checksums for the evidence files retained in this directory.
+- `README.md` — this description of the retained deposit.
 
-## Quick validation
+The live metadata audits, cutoff-review tables, reviewer web-check table, and ZIP convenience bundle previously associated with this deposit are no longer present in the directory and are not listed as part of the current deposit.
 
-The submission package is required to pass:
+## Validation
 
-```bash
-python3 S4_validate_evidence.py
-```
-
-To verify the archived file integrity hash bundle, also run:
+From this directory, verify the retained evidence-file checksums with:
 
 ```bash
 sha256sum -c SHA256SUMS.txt
 ```
 
-The validator prints a UTC timestamp, source-file SHA-256 hashes, record/citation counts, controlled S3 publication-type summaries, normalized source-type counts, and any structural mismatches or drafting residue.
+`S4_validate_evidence.py` was written for the complete manuscript submission package. It expects companion files such as `main.tex`, `S1.tex`, `S2.tex`, `roman_urdu_survey.bib`, `wlpeerj.cls`, and any graphics referenced by the manuscript; those files are not included in the current directory listing. Run the validator from the complete package when those companion files are available.
 
-## Metadata decisions verified against official records
+## Evidence summary
 
-- ROMEVA is retained as arXiv:2606.22478 (v1 submitted 21 June 2026); ACL Anthology ID `2025.americasnlp-1.2` is an unrelated Choctaw dialogue-system paper.
-- Token Cost Inequality uses the official GEM 2026 ACL Anthology record, DOI `10.18653/v1/2026.gem-main.54`.
-- RomanUrdu-NLP-Sentiment-Corpus uses the official Hugging Face dataset DOI `10.57967/hf/7931`.
-- The post-cutoff paper *One Form to Transfer Them All* (arXiv:2608.25904; submitted 26 August 2026) is not part of the current 67-record evidence set.
+The retained S3 matrix contains 67 cited records. The accompanying count artifact reports the controlled publication-type and peer-review-status counts, plus normalized source-type counts. These counts describe only the identified source set; they are not field-wide publication rates or temporal trends.
 
 ## Scope and limitation
 
-This is a structured qualitative review rather than a formal systematic review. Original database exports, deduplication records, and row-level screening decisions were not preserved, so the original evidence curation trail cannot be fully reconstructed from this deposit alone. The retained matrix and audit records are therefore best interpreted as the final, auditable source set used in the manuscript, not as a comprehensive publication database.
+This is a structured qualitative review rather than a formal systematic review. Original database exports, deduplication records, row-level screening decisions, and the previously deposited audit tables are not preserved in the current directory. The retained matrix should therefore be interpreted as the final evidence table available in this repository, not as a complete reconstruction of the original search and screening process.
 
 ## Version
 
-Final technical audit date: **2026-10-07**.
-
-This GitHub directory is public and versioned by Git commits. The manuscript cites a commit-pinned directory URL so the archived S3/S4 version cannot silently move with the default branch. No DOI is assigned to this deposit; the authoritative source is the commit-pinned GitHub directory itself.
+This directory is public and versioned by Git commits. Use a commit-pinned directory URL when citing the deposit so the referenced S3 matrix and validation artifacts cannot silently move with the default branch. The current directory contains only the files listed above.
